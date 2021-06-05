@@ -1,13 +1,10 @@
-import os
 import re
-from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
-from sender import send
+
 
 BASE_ADDRESS = 'https://news.naver.com/'
-
 NEWS_DIRECTORY = '/news'
 
 
@@ -36,8 +33,8 @@ def get_articles(section):
 def get_overview(section, expanded=False):
     section_name = get_section_name(section)
     articles = get_articles(section)
-    separator = '\n-------------------\n'
-    return section_name + separator + '||\n'.join(articles.keys()) + '||\n'
+    separator = '---- '
+    return section_name + separator + ' ||'.join(articles.keys()) + '|| '
 
 
 def get_body_text(article, chars=300):
@@ -58,31 +55,7 @@ def get_details(section):
     for title in articles:
         url = articles[title]
         article = get(BASE_ADDRESS + url)
-        details.append('----------------------------')
+        details.append('----')
         details.append(f"[{title}]")
         details.append(get_body_text(article) + '\n')
     return '\n'.join(details)
-
-
-soup = get(BASE_ADDRESS + 'main/home.nhn')
-sections = soup.find_all('div', {'class': 'main_component droppable'})
-
-overview = []
-for section in sections:
-    overview.append(get_overview(section))
-
-overview_output = '\n'.join(overview)
-
-headline_section = sections[0]
-headlines_details_output = get_details(headline_section)
-
-
-now = '{:%Y-%m-%d_%H}H'.format(datetime.now())
-send(f'[NEWS] NEWS OVERVIEW ({now})', overview_output)
-send(f'[NEWS] ARTICLE SNIPPETS ({now})', headlines_details_output)
-
-
-with open(f'{NEWS_DIRECTORY}/overview/{now}_overview.txt', 'w') as f:
-    f.write(overview_output)
-with open(f'{NEWS_DIRECTORY}/details/{now}_details.txt', 'w') as f:
-    f.write(headlines_details_output)
